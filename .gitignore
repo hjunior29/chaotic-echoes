@@ -35,3 +35,5 @@ chaotic_echoes-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# 
+/planning/

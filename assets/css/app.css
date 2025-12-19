@@ -103,3 +103,60 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Sorting Visualizer Custom Styles */
+.bar {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.bar.comparing {
+  background-color: oklch(66% 0.179 58.318) !important; /* warning color */
+  transform: scaleY(1.05);
+}
+
+.bar.swapping {
+  background-color: oklch(58% 0.253 17.585) !important; /* error color */
+  transform: scaleY(1.1);
+}
+
+.bar.sorted {
+  background-color: oklch(60% 0.118 184.704) !important; /* success color */
+}
+
+.bar.partition {
+  background-color: oklch(60% 0.25 292.717) !important; /* purple for partitions */
+  opacity: 0.8;
+}
+
+.bar.pivot {
+  background-color: oklch(58% 0.158 241.966) !important; /* info color for pivot */
+  box-shadow: 0 0 10px oklch(58% 0.158 241.966);
+}
+
+/* Partition border */
+.bar.partition-start::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: oklch(60% 0.25 292.717);
+  z-index: 10;
+}
+
+.bar.partition-end::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: oklch(60% 0.25 292.717);
+  z-index: 10;
+}
+
+#bars-container {
+  min-height: 450px;
+}

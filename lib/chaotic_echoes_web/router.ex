@@ -17,7 +17,7 @@ defmodule ChaoticEchoesWeb.Router do
   scope "/", ChaoticEchoesWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", SortingVisualizerLive
   end
 
   # Other scopes may use custom stacks.

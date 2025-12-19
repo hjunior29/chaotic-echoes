@@ -25,11 +25,52 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/chaotic_echoes"
 import topbar from "../vendor/topbar"
 
+// Visualization Hook
+const VisualizationHook = {
+  mounted() {
+    this.handleEvent("update_visualization", ({array, comparing, swapping, sorted, partitions}) => {
+      const container = document.getElementById("bars-container")
+      if (!container) return
+
+      const bars = container.querySelectorAll(".bar")
+
+      bars.forEach((bar, index) => {
+        // Remove todas as classes de estado
+        bar.classList.remove("comparing", "swapping", "sorted", "partition", "pivot", "partition-start", "partition-end")
+
+        // Adicionar classes de partição se existirem
+        if (partitions && partitions.length > 0) {
+          partitions.forEach(([start, end, type]) => {
+            if (index >= start && index <= end) {
+              if (type === "active") {
+                bar.classList.add("partition")
+                if (index === start) bar.classList.add("partition-start")
+                if (index === end) bar.classList.add("partition-end")
+              } else if (type === "pivot" && index === end) {
+                bar.classList.add("pivot")
+              }
+            }
+          })
+        }
+
+        // Adicionar classe baseado no estado (sobrescreve partições se necessário)
+        if (comparing.includes(index)) {
+          bar.classList.add("comparing")
+        } else if (swapping.includes(index)) {
+          bar.classList.add("swapping")
+        } else if (sorted.includes(index)) {
+          bar.classList.add("sorted")
+        }
+      })
+    })
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {...colocatedHooks, VisualizationHook},
 })
 
 // Show progress bar on live navigation and form submits

@@ -1,0 +1,221 @@
+<div class="min-h-screen bg-base-100">
+  <!-- Header -->
+  <div class="navbar bg-base-200 shadow-lg">
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold ml-4">Chaotic Echoes - Sorting Visualizer</h1>
+    </div>
+    <div class="flex-none mr-4">
+      <ChaoticEchoesWeb.Layouts.theme_toggle />
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container mx-auto px-4 py-8">
+    <!-- Controls Panel -->
+    <div class="card bg-base-200 shadow-xl mb-8">
+      <div class="card-body">
+        <h2 class="card-title">Controles</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Algorithm Selection -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Algoritmo</span>
+            </label>
+            <form phx-change="select_algorithm">
+              <select
+                class="select select-bordered w-full"
+                name="algorithm"
+                disabled={@is_sorting}
+              >
+                <%= for algo <- @algorithms do %>
+                  <option value={algo.id} selected={@algorithm == algo.id}>
+                    <%= algo.name %>
+                  </option>
+                <% end %>
+              </select>
+            </form>
+          </div>
+
+          <!-- Array Size -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Tamanho do Array: <%= @array_size %></span>
+            </label>
+            <form phx-change="update_array_size">
+              <input
+                type="range"
+                name="value"
+                min="10"
+                max="100"
+                step="1"
+                value={@array_size}
+                class="range range-primary"
+                disabled={@is_sorting}
+              />
+            </form>
+          </div>
+
+          <!-- Speed Control -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Velocidade: <%= @speed %>%</span>
+            </label>
+            <form phx-change="update_speed">
+              <input
+                type="range"
+                name="value"
+                min="1"
+                max="100"
+                step="1"
+                value={@speed}
+                class="range range-secondary"
+              />
+            </form>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Ações</span>
+            </label>
+            <div class="flex gap-2">
+              <button
+                class="btn btn-primary flex-1"
+                phx-click="start_sort"
+                disabled={@is_sorting}
+              >
+                <%= if @is_sorting, do: "Ordenando...", else: "Iniciar" %>
+              </button>
+
+              <button
+                class="btn btn-warning"
+                phx-click="pause_sort"
+                disabled={!@is_sorting}
+              >
+                <%= if @is_paused, do: "Retomar", else: "Pausar" %>
+              </button>
+
+              <button
+                class="btn btn-error"
+                phx-click="reset"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Algorithm Info -->
+        <div class="divider"></div>
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+          <div class="stat">
+            <div class="stat-title">Algoritmo Atual</div>
+            <div class="stat-value text-2xl"><%= get_algorithm_name(@algorithms, @algorithm) %></div>
+            <div class="stat-desc">Complexidade: <%= get_algorithm_complexity(@algorithms, @algorithm) %></div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-title">Comparações</div>
+            <div class="stat-value text-primary"><%= @comparisons %></div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-title">Trocas</div>
+            <div class="stat-value text-secondary"><%= @swaps %></div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-title">Elementos</div>
+            <div class="stat-value text-accent"><%= length(@array) %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visualization Area -->
+    <div class="card bg-base-200 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Visualização</h2>
+
+        <div
+          id="visualization-container"
+          class="w-full bg-base-300 rounded-box p-4"
+          style="height: 500px;"
+          phx-hook="VisualizationHook"
+          data-array={Jason.encode!(@array)}
+        >
+          <div class="flex items-end justify-center h-full gap-0.5" id="bars-container">
+            <%= for {value, index} <- Enum.with_index(@array) do %>
+              <div
+                class="bar bg-primary transition-all duration-200 rounded-t-sm"
+                data-index={index}
+                style={"height: #{value / 5}%; width: #{100 / length(@array)}%; min-width: 2px;"}
+                title={"Valor: #{value}"}
+              >
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex flex-wrap gap-4 mt-4 justify-center">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-primary rounded"></div>
+            <span>Não processado</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-warning rounded"></div>
+            <span>Comparando</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-error rounded"></div>
+            <span>Trocando</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-success rounded"></div>
+            <span>Ordenado</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-purple-500 rounded"></div>
+            <span>Partição Ativa</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-info rounded"></div>
+            <span>Pivot</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card bg-base-200 shadow-xl mt-8">
+      <div class="card-body">
+        <h2 class="card-title">Como Usar</h2>
+        <ol class="list-decimal list-inside space-y-2">
+          <li>Selecione um algoritmo de ordenação no dropdown</li>
+          <li>Ajuste o tamanho do array com o slider (10-100 elementos)</li>
+          <li>Ajuste a velocidade da animação (1-100%)</li>
+          <li>Clique em "Iniciar" para começar a visualização</li>
+          <li>Use "Pausar" para pausar/retomar a animação</li>
+          <li>Use "Reset" para gerar um novo array aleatório</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Algorithm Code -->
+    <div class="card bg-base-200 shadow-xl mt-8">
+      <div class="card-body">
+        <h2 class="card-title flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+          Código do Algoritmo: <%= get_algorithm_name(@algorithms, @algorithm) %>
+        </h2>
+        <div class="mockup-code">
+          <pre><code class="language-python"><%= get_algorithm_code(@algorithms, @algorithm) %></code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
